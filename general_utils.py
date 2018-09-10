@@ -37,7 +37,8 @@ _rel_data_dir_dict = {
     DatasetKind.ucy: "ucy/univ"
 }
 
-
+#This function checks the presence of dataset we selected for the test_data and returns it
+#If the asked dataset is not present, an exception is thrown
 def _check_dataset_kind(dataset_kind: Union[DatasetKind, str]) -> DatasetKind:
     if isinstance(dataset_kind, DatasetKind):
         return dataset_kind
@@ -52,7 +53,11 @@ def get_image_size(dataset_kind: Union[DatasetKind, str]) -> List[int]:
     dataset_kind = _check_dataset_kind(dataset_kind)
     return _image_size_dict[dataset_kind]
 
-
+#This function returns the complete folder path for the data we need in train data
+#The data is fetched through a forloop which takes one by one the train_data_kinds and 
+#Returns the data directory
+#_rel_data_dir_dict is a dictionary which stores all the data directories last
+#portion of the directory corresponding to different data
 def get_data_dir(root: str, dataset_kind: Union[DatasetKind, str]) -> str:
     dataset_kind = _check_dataset_kind(dataset_kind)
     data_dir = os.path.join(root, _rel_data_dir_dict[dataset_kind])

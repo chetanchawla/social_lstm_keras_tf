@@ -19,12 +19,15 @@ def load_dataset_from_config(config: ModelConfig):
                         n_neighbor_pixels=config.n_neighbor_pixels,
                         grid_side=config.grid_side)
 
-
+#This function is used to load data one by one. Whenever we call the function, it makes
+#a loader _singelDatasetLoader type object. The object is then used by the loa function in it
+#and then the loaded data is returned.
 def load_dataset(data_dir, dataset_kind, seq_len, max_n_peds, n_neighbor_pixels,
                  grid_side):
     loader = _SingleDatasetLoader(data_dir, seq_len, max_n_peds,
                                   n_neighbor_pixels, grid_side,
-                                  dataset_kind)
+                                  dataset_kind)#this makes a _SingleDatasetLoader
+    #type object
     dataset = loader.load()
     return dataset
 
@@ -41,19 +44,23 @@ class SingleDataset:
         self.x_data, self.y_data, self.grid_data = self._build_data(frame_data)
 
     def _build_data(self, frame_data):
+        #data is built using this function. Arguments are the SingleDataset
+        #loader object, i.e., self and the frame_data
         x_data = []
         y_data = []
 
         for i in range(len(frame_data) - self.seq_len):
-            cf_data = frame_data[i:i + self.seq_len, ...]
-            nf_data = frame_data[i + 1:i + self.seq_len + 1, ...]
+            cf_data = frame_data[i:i + self.seq_len, ...]#Current Frame Data
+            nf_data = frame_data[i + 1:i + self.seq_len + 1, ...]#Next frame data
 
-            ped_col_index = 0
+            ped_col_index = 0#this is the pedestrian index
             # collect ped ids where the ped id exists in the all frame of
             # the current sequence and the next sequence
             cf_ped_ids = reduce(set.intersection,
                                 [set(nf_ped_ids) for nf_ped_ids in
-                                 cf_data[..., ped_col_index]])
+                                 cf_data[..., ped_col_index]])#This is the
+            #current frame pedestrian ids. Reduce is used to reduce the 
+            #number of iterable items to 1.
 
             nf_ped_ids = reduce(set.intersection,
                                 [set(nf_ped_ids) for nf_ped_ids in
@@ -98,8 +105,12 @@ class SingleDataset:
 
 
 class _SingleDatasetLoader:
+    #This class is used for making Loder objects
     def __init__(self, data_dir, seq_len, max_n_peds, n_neighbor_pixels,
                  grid_side, dataset_kind):
+        #Self refers to "this" or own object. self.data_dir refers to the data directory
+        #of the object made for the data and is an attribute of the object
+        #arguments are stored as attributes.
         self.data_dir = data_dir
         self.seq_len = seq_len
         self.max_n_peds = max_n_peds
@@ -107,10 +118,20 @@ class _SingleDatasetLoader:
         self.grid_side = grid_side
         self.dataset_kind = dataset_kind
         self.image_size = get_image_size(dataset_kind)
-
+    #This is the function which loads the object (loader.load())
+    #it passes self as the argument and takes in an object as its argument
     def load(self) -> SingleDataset:
+        #The preprocessor file is called first which preprocesses all data
+        #to take the given format - [frame, id, x, y] where frame numbers are arranged in ascending order first
+        #then all ids are arranged in ascending order in them and x,y tells the 
+        #centroid coordinates of each box
+        #Preprocessor is an object of the class UCYpreprocessor or ETHpreprocessor which is created 
+        #epending on the train_dataset loaded.
         preprocessor = create_dataset_preprocessor(self.data_dir,
                                                    self.dataset_kind)
+        #This is the actual loading code which is loaded by the above function.
+        #This function is present in both eth and ucy loading codes and does the loading part
+        #from the object created in preprocessoe
         df = preprocessor.preprocess_frame_data()
 
         # All frame IDs in the current dataset
@@ -129,3 +150,4 @@ class _SingleDatasetLoader:
         return SingleDataset(all_frame_data, self.seq_len,
                              self.max_n_peds, self.n_neighbor_pixels,
                              self.grid_side, self.image_size)
+
